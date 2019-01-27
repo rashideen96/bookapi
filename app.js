@@ -18,13 +18,71 @@ const db = mongojs('bookstore', ['books']);
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(body_parser.json());
 
-// set route
-app.get('/', (req, res)=>{
-    res.send('<h1>please use api/books</h1>');
+// allow requests from Angular
+app.use((req, res, next) => {
+    // website you wish to allow to connect
+    res.setHeader('Access-Control-Allow-Origin', 'http://localhost:4200');
+    // request methods you wish to allow
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
+    // request headers you wish to allow
+    res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With,content-type');
+    // pass to next layer of middleware
+    next();
 });
 
+// set route
+app.get('/', (req, res)=>{
+    res.send('please use api/books');
+});
+
+// get list of books
 app.get('/api/books', (req, res, next)=>{
     db.books.find().sort({book_name:1}, (err, books)=>{
+        if(err){
+            res.send(err);
+        }else{
+            res.json(books);
+        }
+    });
+});
+
+// add books
+app.post('/api/books', (req, res, next)=>{
+    db.books.insert(req.body, (err, books)=>{
+        if(err){
+            res.send(err);
+        } else{
+            res.json(books);
+        }
+    })
+});
+
+// update books
+app.put('/api/books/:id', (req, res, next)=>{
+    const id = req.params.id;
+    db.books.findAndModify({query: {_id: mongojs.ObjectId(id)},
+    update: {
+        $set: {
+            ISBN: req.body.ISBN,
+            title: req.body.title,
+            genre: req.body.genre,
+            author: req.body.author
+        }
+    },
+    new: true
+    }, (err, books)=>{
+        if(err){
+            res.send(err);
+        }else{
+            res.json(books);
+        }
+    });
+});
+
+// delete books
+app.delete('/api/books/:id', (req, res, next)=>{
+    const id = req.params.id;
+    db.books.remove({_id: mongojs.ObjectId(id)}, (err, books)=>{
         if(err){
             res.send(err);
         }else{
