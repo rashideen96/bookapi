@@ -1,4 +1,10 @@
+/* 
 
+author : deen
+date : 28/1/2009
+
+
+*/
 // required 
 const express = require('express');
 const path =  require('path');
@@ -18,7 +24,7 @@ const db = mongojs('bookstore', ['books']);
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(body_parser.json());
 
-// allow requests from Angular
+// allow requests from any framework
 app.use((req, res, next) => {
     // website you wish to allow to connect
     res.setHeader('Access-Control-Allow-Origin', 'http://localhost:4200');
@@ -38,6 +44,18 @@ app.get('/', (req, res)=>{
 // get list of books
 app.get('/api/books', (req, res, next)=>{
     db.books.find().sort({book_name:1}, (err, books)=>{
+        if(err){
+            res.send(err);
+        }else{
+            res.json(books);
+        }
+    });
+});
+
+// get one book
+app.get('/api/books/:id', (req, res, next)=>{
+    const id = req.params.id;
+    db.books.find({_id: mongojs.ObjectId(id)}, (err, books)=>{
         if(err){
             res.send(err);
         }else{
@@ -66,6 +84,7 @@ app.put('/api/books/:id', (req, res, next)=>{
             ISBN: req.body.ISBN,
             title: req.body.title,
             genre: req.body.genre,
+            released_year: req.body.released_year,
             author: req.body.author
         }
     },
